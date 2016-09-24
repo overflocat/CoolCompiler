@@ -218,6 +218,7 @@ INTEGER     {DIGIT}+
 <COMMENT><<EOF>>  {
     BEGIN(INITIAL); /*-- Return initial mode to avoid endless loop*/
     yylval.error_msg = "EOF in comment";
+    comment_depth = 0; /*-- reset comment_depth to zero for avoiding causing mistakes when lexer deals with more than one file*/
     return ERROR;
 }
 <COMMENT>.  { ; } /*-- Ignore other words*/
