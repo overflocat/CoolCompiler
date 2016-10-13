@@ -124,7 +124,7 @@ INTEGER     {DIGIT}+
     BEGIN(COMMENT);
     comment_depth++; /*-- When you inter the condition COMMENT the depth should be one*/
 }
---.*\n    { curr_lineno++; } /*-- The comments which start with --*/ 
+--.*    { ; } /*-- The comments which start with --*/ 
 \"  {
   string_buf_ptr = string_buf;
   null_flag = 0; 
