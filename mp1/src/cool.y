@@ -150,6 +150,31 @@ class   : CLASS TYPEID '{' dummy_feature_list '}' ';'
                               stringtable.add_string(curr_filename)); }
         | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
                 { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
+        
+        | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' error
+                {
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may forget a semicolon in the end of the class definition.\n" );
+                }
+        | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' error
+                {
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may foorget a semicolon in the end of the class definition.\n" );
+                }
+        | CLASS error '{' dummy_feature_list '}' ';'
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The Definition of the class may be wrong.\n" );
+                }
+        | CLASS error '{' feature_list '}' ';'
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The Definition of the class may be wrong.\n" );
+                }
         ;
 
 /* Feature list may be empty, but no empty features in list. */
@@ -174,6 +199,35 @@ feature
                 { $$ = attr($1,$3,$5); }
         | OBJECTID ':' TYPEID ';'
                 { $$ = attr($1,$3,no_expr()); }
+
+        | OBJECTID '(' dummy_formal_list ')' ':' TYPEID '{' expression '}' error
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may forget a semicolon in the end of a function.\n" );
+
+                }
+        | OBJECTID '(' formal_list ')' ':' TYPEID '{' expression '}' error
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may forget a semicolon in the end of a function.\n" );
+
+                }
+        | OBJECTID ':' TYPEID ASSIGN expression error
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may forget a semicolon in the end of a definition.\n" );
+
+                }
+        | OBJECTID ':' TYPEID error
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may forget a semicolon in the end of a definition.\n" );
+
+                }
         ;
 
 dummy_formal_list
@@ -252,6 +306,20 @@ expression
                 { $$ = string_const($1); }
         | BOOL_CONST
                 { $$ = bool_const($1); }
+        
+        | '{' error '}'
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong in the block.\n" );
+
+                }
+        | LET error IN expression
+                {
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The definition of let struct may be wrong\n" );
+                }
         ;
 
 let_list
@@ -259,6 +327,14 @@ let_list
                 { $$ = let($1,$3,$4,$6); }
         | OBJECTID ':' TYPEID assign_exp IN expression
                 { $$ = let($1,$3,$4,$6); }
+        
+        | error IN expression
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The definition of let struct may be wrong.\n" );
+
+                }
         ;
 
 assign_exp
