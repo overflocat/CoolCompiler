@@ -151,18 +151,6 @@ class   : CLASS TYPEID '{' dummy_feature_list '}' ';'
         | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
                 { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
         
-        | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' error
-                {
-                        $$ = NULL;
-                        if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "You may forget a semicolon in the end of the class definition.\n" );
-                }
-        | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' error
-                {
-                        $$ = NULL;
-                        if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "You may foorget a semicolon in the end of the class definition.\n" );
-                }
         | CLASS error '{' dummy_feature_list '}' ';'
                 { 
                         $$ = NULL;
@@ -200,33 +188,29 @@ feature
         | OBJECTID ':' TYPEID ';'
                 { $$ = attr($1,$3,no_expr()); }
 
-        | OBJECTID '(' dummy_formal_list ')' ':' TYPEID '{' expression '}' error
-                { 
+        | error '(' dummy_formal_list ')' error '{' expression '}' ';'
+                {
                         $$ = NULL;
                         if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "You may forget a semicolon in the end of a function.\n" );
-
+                                fprintf( stderr, "The Definition of the feature may be wrong.\n" );
                 }
-        | OBJECTID '(' formal_list ')' ':' TYPEID '{' expression '}' error
-                { 
+        | error '(' formal_list ')' error '{' expression '}' ';'
+                {
                         $$ = NULL;
                         if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "You may forget a semicolon in the end of a function.\n" );
-
+                                fprintf( stderr, "The Definition of the feature may be wrong.\n" );
                 }
-        | OBJECTID ':' TYPEID ASSIGN expression error
-                { 
+        | error ASSIGN expression ';'
+                {
                         $$ = NULL;
                         if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "You may forget a semicolon in the end of a definition.\n" );
-
+                                fprintf( stderr, "The Definition of the feature may be wrong.\n" );
                 }
-        | OBJECTID ':' TYPEID error
-                { 
+        | error ';'
+                {
                         $$ = NULL;
                         if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "You may forget a semicolon in the end of a definition.\n" );
-
+                                fprintf( stderr, "The Definition of the feature may be wrong.\n" );
                 }
         ;
 
@@ -306,7 +290,12 @@ expression
                 { $$ = string_const($1); }
         | BOOL_CONST
                 { $$ = bool_const($1); }
-        
+
+
+        | error
+                {
+                        $$ = NULL;
+                }
         | '{' error '}'
                 { 
                         $$ = NULL;
@@ -314,11 +303,17 @@ expression
                                 fprintf( stderr, "Someting Wrong in the block.\n" );
 
                 }
+        | LET error ',' let_list
+                {
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The definition of let struct may be wrong.\n" );
+                }
         | LET error IN expression
                 {
                         $$ = NULL;
                         if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "The definition of let struct may be wrong\n" );
+                                fprintf( stderr, "The definition of let struct may be wrong.\n" );
                 }
         ;
 
@@ -372,8 +367,14 @@ branch_list
 branch
         : OBJECTID ':' TYPEID DARROW expression ';'
                 { $$ = branch($1,$3,$5); }
+        
+        | error ';'
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The Definition of the branch may be wrong.\n" );
+                }
         ;
-
 
 /* end of grammar */
 %%
