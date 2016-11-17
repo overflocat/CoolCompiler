@@ -163,6 +163,37 @@ class   : CLASS TYPEID '{' dummy_feature_list '}' ';'
                         if ( VERBOSE_ERRORS )
                                 fprintf( stderr, "The Definition of the class may be wrong.\n" );
                 }
+        | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' error
+                {
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may miss a semicolon after the end of class.\n" );
+                }
+        | CLASS TYPEID '{' dummy_feature_list '}' error
+                {
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may miss a semicolon after the end of class.\n" );
+                }
+        | CLASS TYPEID '{' feature_list '}' error
+                {
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may miss a semicolon after the end of class.\n" );
+                }
+        | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' error
+                {
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "You may miss a semicolon after the end of class.\n" );
+                }
+        | CLASS error CLASS
+                {
+                        $$ = NULL;
+                        yychar = CLASS;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The class is ignored due to syntax error.\n" );
+                }
         ;
 
 /* Feature list may be empty, but no empty features in list. */
@@ -188,25 +219,13 @@ feature
         | OBJECTID ':' TYPEID ';'
                 { $$ = attr($1,$3,no_expr()); }
 
-        | error '(' dummy_formal_list ')' error '{' expression '}' ';'
+        | OBJECTID '(' formal_list ')' error '{' expression '}' ';'
                 {
                         $$ = NULL;
                         if ( VERBOSE_ERRORS )
                                 fprintf( stderr, "The Definition of the feature may be wrong.\n" );
                 }
-        | error '(' formal_list ')' error '{' expression '}' ';'
-                {
-                        $$ = NULL;
-                        if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "The Definition of the feature may be wrong.\n" );
-                }
-        | error ASSIGN expression ';'
-                {
-                        $$ = NULL;
-                        if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "The Definition of the feature may be wrong.\n" );
-                }
-        | error ';'
+        | OBJECTID error ';'
                 {
                         $$ = NULL;
                         if ( VERBOSE_ERRORS )
@@ -229,6 +248,21 @@ formal_list
 formal
         : OBJECTID ':' TYPEID
                 { $$ = formal($1,$3); }
+        
+        | error ','
+                {
+                        $$ = NULL;
+                        yychar = ',';
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The Definition of the formal may be wrong.\n" );
+                }
+        | error ')'
+                {
+                        $$ = NULL;
+                        yychar = ')';
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The Definition of the formal may be wrong.\n" );
+                }
         ;
 
 expression
@@ -292,15 +326,11 @@ expression
                 { $$ = bool_const($1); }
 
 
-        | error
-                {
-                        $$ = NULL;
-                }
-        | '{' error '}'
+        | '(' error ')'
                 { 
                         $$ = NULL;
                         if ( VERBOSE_ERRORS )
-                                fprintf( stderr, "Someting Wrong in the block.\n" );
+                                fprintf( stderr, "Someting Wrong in the ().\n" );
 
                 }
         | LET error ',' let_list
@@ -323,6 +353,13 @@ let_list
         | OBJECTID ':' TYPEID assign_exp IN expression
                 { $$ = let($1,$3,$4,$6); }
         
+        | error ',' let_list
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The definition of let struct may be wrong.\n" );
+
+                }
         | error IN expression
                 { 
                         $$ = NULL;
@@ -344,6 +381,39 @@ expression_list_com
                 { $$ = single_Expressions($1); }
         | expression_list_com ',' expression
                 { $$ = append_Expressions($1,single_Expressions($3)); }
+
+        | error ')'
+                { 
+                        $$ = NULL;
+                        yychar = ')';
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong in the ().\n" );
+
+                }
+        | error ','
+                { 
+                        $$ = NULL;
+                        yychar = ',';
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong with the expression.\n" );
+
+                }
+        | expression_list_com ',' error ','
+                { 
+                        $$ = NULL;
+                        yychar = ',';
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong with the expression.\n" );
+
+                }
+        | expression_list_com ',' error ')'
+                { 
+                        $$ = NULL;
+                        yychar = ')';
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong with the expression.\n" );
+
+                }
         ;
 
 expression_list_sem
@@ -351,6 +421,37 @@ expression_list_sem
                 { $$ = single_Expressions($1); }
         | expression_list_sem expression ';'
                 { $$ = append_Expressions($1,single_Expressions($2)); }
+
+        | error ';'
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong with the expression.\n" );
+
+                }
+        | error '}'
+                { 
+                        $$ = NULL;
+                        yychar = '}';
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong with the expression.\n" );
+
+                }
+        | expression_list_sem error ';'
+                { 
+                        $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong with the expression.\n" );
+
+                }
+        | expression_list_sem error '}'
+                { 
+                        $$ = NULL;
+                        yychar = '}';
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "Someting Wrong with the expression.\n" );
+
+                }
         ;
 
 dummy_expression_list
@@ -371,6 +472,13 @@ branch
         | error ';'
                 { 
                         $$ = NULL;
+                        if ( VERBOSE_ERRORS )
+                                fprintf( stderr, "The Definition of the branch may be wrong.\n" );
+                }
+        | error ESAC
+                {
+                        $$ = NULL;
+                        yychar = ESAC;
                         if ( VERBOSE_ERRORS )
                                 fprintf( stderr, "The Definition of the branch may be wrong.\n" );
                 }

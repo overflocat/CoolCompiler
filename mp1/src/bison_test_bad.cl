@@ -14,9 +14,9 @@ Class C inherits a {
 Class D inherts A {
 
     (*error: The definition of the feature is wrong *)
-    123 : Int <- 666;
+    a : 123 <- 666;
     (*error: The definition of the feature is wrong *)
-    123 : Int;
+    b : 123;
 };
 
 Class E inherits A {
@@ -44,7 +44,32 @@ Class F inherits A {
             case x of
                 (* error: The branch is not correct *)
                 z : 123;
+                (* error: The branch is not correct *)
+                z : 456
             esac;
         }
+    };
+};
+
+(* error: The semicolon is missed *)
+class G inherits A {
+
+}
+
+(* error: The '}' is missed *)
+Class H inherits A {
+;
+
+Class I inherits A {
+     test1 ( ) : String {
+        let x : String in 
+        {
+            (* error: The expression is wrong *)
+            test2( 123+ );
+        }
+    };
+    (* error: The formal is wrong *)
+    test2 ( a : 666, ) : Int {
+
     };
 };
