@@ -1,7 +1,9 @@
 #Clang Static Analyzer阅读实验 问题回答
 ##3.1
 5.简要说明test.c、AST.svg、CFG.svg和ExplodedGraph.svg之间的联系与区别。
-答：test.c为源代码，lexer和parser会对源代码进行分析，生成AST；CFG是从AST的基础上生成的，它表示了程序的控制流；静态分析器会在CFG的基础上对程序进行检测，每一条程序中可能存在的执行路径都会被检测到，这些路径及对应的状态用ExplodedGraph来表示。
+答：test.c为源代码，lexer和parser会对源代码进行分析，生成AST；AST体现了源代码的抽象语法结构；
+CFG是从AST的基础上生成的，它表示了程序的控制流；每一个结点代表顺序执行的一个基本语句块，树的边代表控制转移；
+静态分析器会在CFG的基础上对程序进行检测，每一条程序中可能存在的执行路径都会被检测到，这些路径及对应的状态用ExplodedGraph来表示。
 
 ##3.2
 1.Checker 对于程序的分析主要在 AST 上还是在 CFG 上进行？
@@ -14,7 +16,7 @@
 3.简要解释分析器在分析下面程序片段时的过程，在过程中产生了哪些symbolic values? 它们的关系是什么？
 答：在第一行中，产生了`Sval1`，它代表常数3；`Sval2`，它代表x的`MemoryRegion`，并且与`Sval1`相关联；`Sval3`，代表常数4；`Sval4`，代表y的`MemoryRegion`，并且与`Sval3`相关联；
 在第二行中，产生了`Sval5`，它代表x的`MemoryRegion`的地址；产生了`Sval6`，它代表p的`MemoryRegion`,并且和`Sval5`相关联；
-在第三行中，产生了`Sval7`，它代表p的`MemoryRegion`，并且和`Sval5`相关联；产生了`Sval8`，它代表常数1；产生了`Sval9`，它是一个子表达式，代表`p+1`的和；产生了`Sval10`，代表`*(p+1)`,与`Sval9`相关联；产生了`Sval11`，它表示z的`MemoryRegion`，与`Sval10`相关联。
+在第三行中，产生了`Sval7`，它代表p的左值，是一个`MemoryRegion`，另外还产生一个`Sval`，它是一个`SymbolValue`，并且和`Sval6`相关联；产生了`Sval8`，它代表常数1；产生了`Sval9`，它是一个子表达式，代表`p+1`的和；产生了`Sval10`，它是一个`SymbolValue`，代表`*(p+1)`,与`Sval9`相关联；产生了`Sval11`，它表示z的`MemoryRegion`，与`Sval10`相关联。
 
 ##3.3
 1.LLVM 大量使用了 `C++11/14`的智能指针，请简要描述几种智能指针的特点、使用场合，如有疑问也可以记录在报告中。
@@ -28,10 +30,10 @@
 LLVM使用手工构造的模板来代替RTTI，例如isa<>， cast<>，和dyn_cast<>。
 
 3.如果你想写一个函数，它的参数既可以是数组，也可以是std::vector，那么你可以声明该参数为什么类型？如果你希望同时接受 C 风格字符串和 std::string 呢？
-答：对于前一个问题，可以使用LLVM提供的类`llvm:ArrayRef`，把参数声明为这个类型，就可以同时接受定长数组和std::vector类型。对于后一个问题则更简单，只需要将函数的类型声明为std::string类型即可；在这种情况下，当传入的参数为C风格的字符串时，参数会自动做类型转换，将C风格字符串转换为std::string类型。
+答：对于前一个问题，可以使用LLVM提供的类`llvm:ArrayRef`，把参数声明为这个类型，就可以同时接受定长数组和std::vector类型。对于后一个问题则更简单，只需要将函数的类型声明为std::string类型即可；在这种情况下，当传入的参数为C风格的字符串时，参数会自动做类型转换，将C风格字符串转换为std::string类型；另外，也可以将参数声明为llvm::StringRef类型，效果相同。
 
 4.你有时会在cpp文件中看到匿名命名空间的使用，这是出于什么考虑？
-答：匿名命名空间将告诉`C++`编译器，这个命名空间中的内容只在当前的翻译单元中可见，这将有利于C++编译器做出更多的优化，并且避免可能的名字冲突。
+答：匿名命名空间将告诉`C++`编译器，这个命名空间中的内容只在当前的翻译单元中可见，这将有利于`C++`编译器做出更多的优化，并且避免可能的名字冲突。
 
 ##3.4
 1.这个 checker 对于什么对象保存了哪些状态？保存在哪里？
@@ -42,7 +44,8 @@ LLVM使用手工构造的模板来代替RTTI，例如isa<>， cast<>，和dyn_ca
 答：当遇到打开函数`fopen()`时，该函数返回值所对应的文件描述符的状态会被置为打开状态；当遇到关闭函数`fclose()`时，该函数参数所对应的文件描述符的状态会被置为关闭状态。
 
 3.在哪些地方有对状态的检查？
-答：首先是在`SimpleStreamChecker::checkPreCall`中，这个函数在函数调用之前执行，如果发现当前函数是`fclose()`且其参数对应的文件描述符处在关闭状态，则说明该文件描述符被多次关闭，则报错；还有即是在`SimpleStreamChecker::checkDeadSymbols`中，如果一个Stream的状态已经被声明为dead，那么如果这个Stream的状态是打开，并且它的值不是NULL，则报错，并将已经`dead`的symbol移出streammap。
+答：首先是在`SimpleStreamChecker::checkPreCall`中，这个函数在函数调用之前执行，如果发现当前函数是`fclose()`且其参数对应的文件描述符处在关闭状态，则说明该文件描述符被多次关闭，则报错；
+还有即是在`SimpleStreamChecker::checkDeadSymbols`中，如果一个Stream的状态已经被声明为dead，那么如果这个Stream的状态是打开，并且它的值不是NULL，则报错，并将已经`dead`的symbol移出streammap。
 另外在下一问中提到的函数`SimpleStreamChecker::checkPointerEscape`中也有对状态的检查，它会把不可追踪其状态的文件描述符移出追踪列表。
 
 4.函数SimpleStreamChecker::checkPointerEscape的逻辑是怎样的？实现了什么功能？用在什么地方？
@@ -99,29 +102,29 @@ void ento::registerSimpleStreamChecker(CheckerManager &mgr) {
 3.`.td`文件在clang中出现多次，比如这里的clang/include/clang/StaticAnalyzer/Checkers/Checkers.td。这类文件的作用是什么？它是怎样生成C++头文件或源文件的？这个机制有什么好处？
 答：这是LLVM中TableGen工具定义的数据文件，它将能够根据这些数据文件，根据TableGen的语法解释这些数据，并且生成相应的文件供后端调用。TableGen工具会根据对应的语法，将.td文件中的类和定义等进行展开。比如在如下的例子中：
 ```
-class C { bit V = 1; }  
-def X : C;  
-def Y : C {  
-string Greeting ="hello";  
-}  
+class C { bit V = 1; }
+def X : C;
+def Y : C {
+string Greeting ="hello";
+}
 ```
 保存为.td文件，用TableGen工具处理后变为如下格式：
 ```
-------------- Classes-----------------  
-class C {  
-bit V = 1;  
-string NAME = ?;  
-}  
-------------- Defs-----------------  
-def X { // C  
-bit V = 1;  
-string NAME = ?;  
-}  
-def Y { // C  
-bit V = 1;  
-string Greeting ="hello";  
-string NAME = ?;  
-}  
+------------- Classes-----------------
+class C {
+bit V = 1;
+string NAME = ?;
+}
+------------- Defs-----------------
+def X { // C
+bit V = 1;
+string NAME = ?;
+}
+def Y { // C
+bit V = 1;
+string Greeting ="hello";
+string NAME = ?;
+}
 ```
 只要用对应的语法描述相应的数据结构或者头文件引用关系，那么就可以使用TableGen产生`C++`的头文件或者源文件。这个机制主要的好处是避免了对大量相似（但不完全相同）的代码手工地进行修改，减少了工作量的同时也减少了可能出现的错误。
 
