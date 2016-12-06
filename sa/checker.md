@@ -155,7 +155,7 @@
 
      这里主要是检测fseek()的参数是不是指定的类型，不是的话则产生一个BugReport。
 
-     比较奇怪的是，这列相较SimpleStreamChecker，没有对PointerEscape的检测。
+     比较奇怪的是，这里相较SimpleStreamChecker，没有对PointerEscape的检测。
 
 ## 对现有checker的改进
 
@@ -198,7 +198,7 @@
 
    往一个输入流里写字符显然不能达到预期的效果，但是分析器不会报任何warning。
 
-本次实验我（们）主要是针对第一点和第五点，对checker做了对应的修改。在目前的框架上也能比较容易地实现对函数操作数的检测，只要在StreamChecker::CheckInconsistency函数里加上对Sval对应Stream是否已经close就可以实现，但是由于编译的时间过长以及本次实验的时间比较紧张，所以并没有实现。
+本次实验我（们）主要是针对第一点和第五点，对checker做了对应的修改。在目前的框架上也能比较容易地实现对函数操作数的检测，只要在StreamChecker::CheckInconsistency函数里加上对Sval对应Stream是否已经close就可以实现这个功能，但是由于编译的时间过长以及本次实验的时间比较紧张，所以并没有完成。
 
 以下是对代码的说明，我（们）这次做的主要改进有：
 
