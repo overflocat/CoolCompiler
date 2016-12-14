@@ -41,24 +41,13 @@ class C: public B1, public B2 {
 int main ( void )
 {
     C c;
-    B1 *b1;
-    B2 *b2;
 
-    b1 = &c;
-    b2 = &c;
-    b1->a = 1;
-    b2->a = 2;
-    b1->PrintA();
-    b2->PrintA();
-    cout<<(long)&(b1->a)<<endl;
-    cout<<(long)&(b2->a)<<endl;
-
-    cout<<endl;
-
-    c.b1 = 3;
-    c.b2 = 4;
-    c.PrintB1();
-    c.PrintB2();
-
+    c.B1::a = 1;
+    c.B2::a = 2;
+    c.B1::PrintA();
+    c.B2::PrintA();
+    cout<<(long)&(c.B1::a)<<endl;
+    cout<<(long)&(c.B2::a)<<endl;
+    
     return 0;
 }
