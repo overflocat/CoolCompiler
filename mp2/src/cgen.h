@@ -96,7 +96,7 @@ public:
 	{ Basic, NotBasic };
 
 #ifndef MP3
-	void codeGenMainmain();
+	void codeGenMainmain( std::ostream &ostream );
 #endif
 
 private: 
