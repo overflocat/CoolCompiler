@@ -876,7 +876,7 @@ operand cond_class::code(CgenEnvironment *env)
 	if( elseOperand.get_type( ).get_id( ) == INT32 )
 		realReturnV = vp.load( i32_type, intReturnV );
 	else if ( elseOperand.get_type( ).get_id( ) == INT1 )
-		realReturnV = vp.load( i32_type, boolReturnV );
+		realReturnV = vp.load( i1_type, boolReturnV );
 
 	return realReturnV;
 }
